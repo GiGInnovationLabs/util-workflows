@@ -20,13 +20,30 @@ jobs:
           token: ${{ env.GHCR_TOKEN }}
       - id: theVersion
         run: echo "::set-output name=theVersion::$(echo ${GITHUB_REF##*/})"
-      - run: |
-          make test
-          find src/ -name ${SERVICE}.openapi.json | xargs -r gh release upload ${VERSION} --clobber
+      - run: make test
         if: "!contains(github.event.head_commit.message, '[skip test]')"
+      - name: Publish OpenApi spec
+        run: find src/ -name ${SERVICE}.openapi.json | xargs -r gh release upload ${VERSION} --clobber
         env:
           VERSION: ${{ steps.theVersion.outputs.theVersion }}
           SERVICE: ${{ github.event.repository.name }}
+      - name: Checkout k6 repository to access client generation
+        uses: actions/checkout@v2
+        with:
+          path: ./k6
+          token: ${{ secrets.GHCR_TOKEN }}
+          repository: GiGInnovationLabs/k6-playground
+      - name: Generate and publish clients for k6
+        run: |
+          find src/ -name ${SERVICE}.openapi.json | xargs -i -r  sh -c 'cp {} ./k6/012_autogen_clients/specs/'
+          cd ./k6/012_autogen_clients
+          ./generate.sh ${SERVICE} ${SERVICE}.openapi.json
+          tar -czvf ${SERVICE}-k6-client.tar.gz ./clients/${SERVICE}/
+          gh release upload ${VERSION} ./${SERVICE}-k6-client.tar.gz
+          cd -
+        env:
+          VERSION: ${{ steps.theVersion.outputs.theVersion }}
+          SERVICE: ${{ github.event.repository.name }} 
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
