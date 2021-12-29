@@ -39,8 +39,8 @@ jobs:
           cd ./k6/012_autogen_clients
           ./generate.sh ${SERVICE} ${SERVICE}.openapi.json
           tar -czvf ${SERVICE}-k6-client.tar.gz ./clients/${SERVICE}/
-          gh release upload ${VERSION} ./${SERVICE}-k6-client.tar.gz
           cd -
+          gh release upload ${VERSION} ./k6/012_autogen_clients/${SERVICE}-k6-client.tar.gz --clobber
         env:
           VERSION: ${{ steps.theVersion.outputs.theVersion }}
           SERVICE: ${{ github.event.repository.name }} 
