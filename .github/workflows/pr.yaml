@@ -89,6 +89,8 @@ jobs:
           rm -f helmfile.lock
 
           helmfile -f helmfile.yaml -e k3d -l name=default-support -l namespace=traefik -l name=apcrg sync --wait --skip-deps
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -113,7 +115,8 @@ jobs:
         run: |
           helmfile -f helmfile.yaml -e k3d -l name=strimzi-operator sync --wait --skip-deps
           helmfile -f helmfile.yaml -e k3d -l name=strimzi-support -l name=ksqldb -l name=ksqldb-support sync --wait --skip-deps
-
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
       - name: Check ksqldb
         run: |
           echo "showing kafka pods"
