@@ -85,7 +85,7 @@ jobs:
       - name: Deploy in-cluster services
         working-directory: ./devops/helmfile
         run: |
-          helmfile -f helmfile.yaml -e k3d -l name=default-support -l name=apcrg sync --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l name=default-support -l name=apcrg sync --wait --skip-deps
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -104,6 +104,21 @@ jobs:
                 -d '{"schema":"{\"type\":\"record\",\"name\":\"'${TOPIC}'\",\"fields\":[]}","schemaType":"AVRO"}' \
                 localhost:8080/apis/ccompat/v6/subjects/${TOPIC}-value/versions
           done
+
+      - name: Deploy Kafka Namespace
+        working-directory: ./devops/helmfile
+        run: |
+          helmfile -f helmfile.yaml -e k3d -l name=strimzi-operator sync --wait --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l namespace=kafka sync --wait --skip-deps
+
+      - name: Check ksqldb
+        run: |
+          echo "showing kafka pods"
+          kubectl get pods -n kafka
+
+          echo "----------------"
+          echo "checking ksqldb health check"
+          curl --location --request GET 'http://ksqldb.localhost/healthcheck' --header 'Accept: application/vnd.ksql.v1+json'
 
       - name: Deploy microservice
         run: |
