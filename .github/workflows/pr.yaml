@@ -90,9 +90,7 @@ jobs:
           helmfile -e k3d deps
           rm -f helmfile.lock
 
-          helmfile -f helmfile.yaml -e k3d -l name=default-support -l namespace=traefik -l name=apcrg sync --skip-deps
-          helmfile -f helmfile.yaml -e k3d -l namespace=traefik sync --skip-deps
-          helmfile -f helmfile.yaml -e k3d -l name=apcrg sync --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l name=default-support -l name=apcrg sync --skip-deps
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -116,7 +114,7 @@ jobs:
         working-directory: ./devops/helmfile
         run: |
           helmfile -f helmfile.yaml -e k3d -l name=strimzi-operator sync --skip-deps
-          helmfile -f helmfile.yaml -e k3d -l name=strimzi-support -l name=ksqldb -l name=ksqldb-support sync --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l name=strimzi-support -l name=ksqldb sync --skip-deps
 
       - name: Deploy microservice
         run: |
