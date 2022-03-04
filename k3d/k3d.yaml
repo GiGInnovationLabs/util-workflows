@@ -14,15 +14,10 @@ registries:
       "localhost:5000":
         endpoint:
           - http://k3d-registry:5000
-      "host.k3d.internal:5000":
-        endpoint:
-          - http://k3d-registry:5000
-ports:
-  - port: 80:80
-    nodeFilters: ["loadbalancer"]
-    
 options:
+  k3d:
+    disableLoadbalancer: true
   k3s:
     extraArgs:
-      - arg: "--disable=traefik,metrics-server"
+      - arg: "--disable=servicelb,traefik,local-storage,metrics-server"
         nodeFilters: ["all"]

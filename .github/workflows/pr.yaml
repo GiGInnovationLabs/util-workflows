@@ -125,6 +125,4 @@ jobs:
           echo "showing kafka pods"
           kubectl get pods -n kafka
 
-          echo "----------------"
-          echo "checking ksqldb health check"
-          curl --location --request GET 'http://ksqldb.localhost/healthcheck' --header 'Accept: application/vnd.ksql.v1+json'
+          kubectl get services -n kafka
