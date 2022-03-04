@@ -119,10 +119,3 @@ jobs:
       - name: Deploy microservice
         run: |
           make pgsql start
-
-      - name: Check ksqldb
-        run: |
-          echo "showing kafka pods"
-          kubectl get pods -n kafka
-
-          kubectl get services -n kafka
