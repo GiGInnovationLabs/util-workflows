@@ -115,7 +115,7 @@ jobs:
       - name: Deploy Kafka Namespace
         working-directory: ./devops/helmfile
         run: |
-          helmfile -f helmfile.yaml -e k3d -l name=strimzi-operator sync --wait --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l name=strimzi-operator sync --skip-deps
           helmfile -f helmfile.yaml -e k3d -l name=strimzi-support -l name=ksqldb -l name=ksqldb-support sync --skip-deps
 
       - name: Deploy microservice
