@@ -91,6 +91,8 @@ jobs:
           rm -f helmfile.lock
 
           helmfile -f helmfile.yaml -e k3d -l name=default-support -l namespace=traefik -l name=apcrg sync --wait --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l namespace=traefik sync --wait --skip-deps
+          helmfile -f helmfile.yaml -e k3d -l name=apcrg sync --wait --skip-deps
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
