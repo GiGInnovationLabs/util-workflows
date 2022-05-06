@@ -65,3 +65,6 @@ jobs:
           token: ${{ env.GHCR_TOKEN }}
           ref: main
           inputs: '{ "repository": "${{ github.event.repository.name }}", "version": "${{ steps.theVersion.outputs.theVersion }}" }'
+      - name: Publish NuGet packages
+        run: |
+          just publish ${{ steps.theVersion.outputs.theVersion }}
