@@ -9,7 +9,7 @@ env:
   GHCR_ORG: ${{ vars.GHCR_ORG }}
   REPO_DEVOPS_BRANCH: main
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
-  ECLINT_VERSION: 2.7.0
+  ECLINT_VERSION: 2.7.2
 jobs:
   test:
     name: run tests

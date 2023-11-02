@@ -9,6 +9,8 @@ env:
   GHCR_ORG: ${{ vars.GHCR_ORG }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
   AWS_REGION: eu-west-1
+  ECLINT_REPO: editorconfig-checker/editorconfig-checker
+  ECLINT_VERSION: 2.7.2
 jobs:
   helmfile_job:
     name: deploy to EKS
@@ -36,10 +38,20 @@ jobs:
       - uses: extractions/setup-just@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      - name: setop opa
+      - name: setup opa
         uses: open-policy-agent/setup-opa@v2
         with:
           version: 0.53.1
+      - uses: jaxxstorm/action-install-gh-release@v1
+        with:
+          repo: ${{ env.ECLINT_REPO }}
+          tag: ${{ env.ECLINT_VERSION }}
+          binaries-location: bin
+          chmod: 0755
+      - name: setup editorconfig-checker
+        run: |
+          ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
+            /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker          
       - uses: jaxxstorm/action-install-gh-release@v1
         with:
           repo: shenwei356/rush
