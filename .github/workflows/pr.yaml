@@ -38,35 +38,30 @@ jobs:
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
-      - id: skipTest
-        run:
-          echo "pass"
-      #   uses: Legorooj/skip-ci@v2
-      #   with:
-      #     pattern: '\[skip\stest\]'
-      #     token: ${{ env.GHCR_TOKEN }}
       - name: setup opa
-        if: ${{ steps.skipTest.outputs.canSkip != 'true' }}
         uses: open-policy-agent/setup-opa@v2
         with:
           version: 0.53
+      - uses: StyraInc/setup-regal@main
+        if: ${{ contains(github.repository, '-opa-') }}
+        with:
+          version: latest
       - uses: jaxxstorm/action-install-gh-release@v1
-        if: ${{ contains(github.repository, '-opa-') && steps.skipTest.outputs.canSkip != 'true' }}
+        if: ${{ contains(github.repository, '-opa-') }}
         with:
           repo: ${{ env.ECLINT_REPO }}
           tag: ${{ env.ECLINT_VERSION }}
           binaries-location: bin
           chmod: 0755
       - name: setup editorconfig-checker
-        if: ${{ contains(github.repository, '-opa-') && steps.skipTest.outputs.canSkip != 'true' }}
+        if: ${{ contains(github.repository, '-opa-') }}
         run: |
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
             /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
       - name: test
-        if: ${{ steps.skipTest.outputs.canSkip != 'true' }}
         run: just test
       - id: hasTestReport
-        if: ${{ (success() || failure()) && steps.skipTest.outputs.canSkip != 'true' }}
+        if: ${{ always() }}
         run: |
           if [ "$(find /tmp/test-report -name '*.trx' 2>/dev/null | wc -l)" -gt 0 ]; then
             echo "hasTrx=true" >> $GITHUB_OUTPUT
