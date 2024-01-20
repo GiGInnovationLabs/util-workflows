@@ -32,9 +32,33 @@ jobs:
           else
             echo "HELMFILE_SYNC=false" >> $GITHUB_ENV
           fi
+      - name: detect environment
+        run: |
+          echo "ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+          case "${{ inputs.environment }}" in
+            'eks-chprod01')
+              REGION='eu-central-2'
+              ;;
+            gke-*)
+              REGION='${{ vars.GCP_REGION }}'
+              ;;
+            *)
+              REGION='${{ vars.AWS_REGION }}'
+              ;;
+          esac
+          echo "REGION=${REGION}" >> $GITHUB_ENV
+      - name: detect cluster
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') }}
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" == 'eks-dev' ]; then
+            CLUSTER='dev01'
+          else
+            CLUSTER="$(echo ${{ env.ENVIRONMENT }} | sed 's/^eks-//g;s/^gke-//g')"
+          fi
+          echo "CLUSTER=${CLUSTER}" >> $GITHUB_ENV
       - name: announce
         run: |
-          echo "environment=${{ inputs.environment }}, e2e=${{ env.E2E }}"
+          echo "env=${{ env.ENVIRONMENT }}, cluster=${{ env.CLUSTER }}, region=${{ env.REGION }}, e2e=${{ env.E2E }}"
       - uses: extractions/setup-just@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
@@ -51,7 +75,7 @@ jobs:
       - name: setup editorconfig-checker
         run: |
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
-            /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker          
+            /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
       - uses: jaxxstorm/action-install-gh-release@v1
         with:
           repo: shenwei356/rush
@@ -66,28 +90,24 @@ jobs:
           install-kubectl: no
           install-helm: no
       - name: setup aws cli
-        if: ${{ startsWith(inputs.environment, 'eks-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ env.REGION }}
       - name: login to eks
-        if: ${{ startsWith(inputs.environment, 'eks-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
         run: |
-          if [ "${{ inputs.environment }}" == 'eks-dev' ]; then
-            aws eks update-kubeconfig --name dev01
-          else
-            aws eks update-kubeconfig --name $(echo '${{ inputs.environment }}' | sed 's/eks\-//g')
-          fi
+          aws eks update-kubeconfig --name ${{ env.CLUSTER }}
       - name: setup openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           sudo apt-get update
           sudo apt-get --assume-yes --no-install-recommends install openvpn
-          echo "KUBE_CONFIG_DATA_KEY=${{ inputs.environment }}_KUBE_CONFIG_DATA" | sed 's/-/_/g' >> $GITHUB_ENV
+          echo "KUBE_CONFIG_DATA_KEY=${{ env.ENVIRONMENT }}_KUBE_CONFIG_DATA" | sed 's/-/_/g' >> $GITHUB_ENV
       - name: start openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           echo "${{ secrets.NDVR_OVPN_USERNAME_PASSWORD }}" > secrets.txt
           echo "${{ secrets.NDVR_OVPN_CONF }}" > config.ovpn
@@ -97,9 +117,25 @@ jobs:
           sudo echo '10.100.235.50 haproxy' | sudo tee -a /etc/hosts
           sudo openvpn --config config.ovpn --log openvpn.log --daemon
       - name: wait for openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           until ping -c1 haproxy; do sleep 2; done
+      - name: login to gcp
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - name: login to gke
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        uses: 'google-github-actions/get-gke-credentials@v2'
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+      - name: setup gke context
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        run: |
+          kubectl config rename-context $(kubectl config current-context) ${{ env.ENVIRONMENT }}
       - name: disable error notifications
         run: |
           echo "DEPLOYMENT_BEGIN=$(($(date +%s%N)/1000000))" >> $GITHUB_ENV
@@ -138,7 +174,7 @@ jobs:
           repo: ${{ vars.GHCR_ORG }}/endeavour-e2e
           token: ${{ secrets.GHCR_TOKEN }}
           ref: main
-          inputs: '{"environment": "${{ inputs.environment }}"}'
+          inputs: '{"environment": "${{ env.ENVIRONMENT }}"}'
       - name: capture asset registry
         uses: benc-uk/workflow-dispatch@v1
         with:
@@ -152,7 +188,7 @@ jobs:
           payload: |
             {
               "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-              "username": "${{ inputs.environment }}", "unfurl_links": false, "unfurl_media": false,
+              "username": "${{ env.ENVIRONMENT }}", "unfurl_links": false, "unfurl_media": false,
               "blocks": [{
                 "type": "section",
                 "fields": [
@@ -168,24 +204,24 @@ jobs:
         if: ${{ failure() }}
         with:
           api_key: ${{ secrets.OPSGENIE_API_KEY }}
-          alias: orch-${{ inputs.environment }}
+          alias: orch-${{ env.ENVIRONMENT }}
           message: Deployment failed
           description: |
             <a target="_blank" href="${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}">Workflow logs</a>
           priority: P3
-          tags: endeavour,github,orch,${{ inputs.environment }}
+          tags: endeavour,github,orch,${{ env.ENVIRONMENT }}
           using_eu_url: true
       - name: close opsgenie alert
         uses: rockem/close-opsgenie-alert-action@v1
         if: ${{ success() }}
         with:
           api_key: ${{ secrets.OPSGENIE_API_KEY }}
-          alias: orch-${{ inputs.environment }}
+          alias: orch-${{ env.ENVIRONMENT }}
           using_eu_url: true
       - name: stop openvpn
         if: ${{ always() }}
         run: |
-          if [ "${{ startsWith(inputs.environment, 'iv-') }}" == 'true' ]; then
+          if [ "${{ startsWith(env.ENVIRONMENT, 'iv-') }}" == 'true' ]; then
             sudo chmod 777 openvpn.log
             sudo killall openvpn
           fi
