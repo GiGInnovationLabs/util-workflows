@@ -18,6 +18,30 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: main
+      - name: detect environment
+        run: |
+          echo "ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+          case "${{ inputs.environment }}" in
+            'eks-chprod01')
+              REGION='eu-central-2'
+              ;;
+            gke-*)
+              REGION='${{ vars.GCP_REGION }}'
+              ;;
+            *)
+              REGION='${{ vars.AWS_REGION }}'
+              ;;
+          esac
+          echo "REGION=${REGION}" >> $GITHUB_ENV
+      - name: detect cluster
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') }}
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" == 'eks-dev' ]; then
+            CLUSTER='dev01'
+          else
+            CLUSTER="$(echo ${{ env.ENVIRONMENT }} | sed 's/^eks-//g;s/^gke-//g')"
+          fi
+          echo "CLUSTER=${CLUSTER}" >> $GITHUB_ENV
       - uses: actions/checkout@v3
         with:
           ref: asset-registry
@@ -33,21 +57,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - name: login to eks
-        if: ${{ startsWith(inputs.environment, 'eks-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
         run: |
-          if [ "${{ inputs.environment }}" == 'eks-dev' ]; then
-            aws eks update-kubeconfig --name dev01
-          else
-            aws eks update-kubeconfig --name $(echo '${{ inputs.environment }}' | sed 's/eks\-//g')
-          fi
+          aws eks update-kubeconfig --name ${{ env.CLUSTER }}
       - name: setup openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           sudo apt-get update
           sudo apt-get --assume-yes --no-install-recommends install openvpn
-          echo "KUBE_CONFIG_DATA_KEY=${{ inputs.environment }}_KUBE_CONFIG_DATA" | sed 's/-/_/g' >> $GITHUB_ENV
+          echo "KUBE_CONFIG_DATA_KEY=${{ env.ENVIRONMENT }}_KUBE_CONFIG_DATA" | sed 's/-/_/g' >> $GITHUB_ENV
       - name: start openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           echo "${{ secrets.NDVR_OVPN_USERNAME_PASSWORD }}" > secrets.txt
           echo "${{ secrets.NDVR_OVPN_CONF }}" > config.ovpn
@@ -57,9 +77,25 @@ jobs:
           sudo echo '10.100.235.50 haproxy' | sudo tee -a /etc/hosts
           sudo openvpn --config config.ovpn --log openvpn.log --daemon
       - name: wait for openvpn
-        if: ${{ startsWith(inputs.environment, 'iv-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'iv-') }}
         run: |
           until ping -c1 haproxy; do sleep 2; done
+      - name: login to gcp
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - name: login to gke
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        uses: 'google-github-actions/get-gke-credentials@v2'
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.REGION }}
+      - name: setup gke context
+        if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
+        run: |
+          kubectl config rename-context $(kubectl config current-context) ${{ env.ENVIRONMENT }}
       - name: login to ghcr.io
         run: |
           docker login ghcr.io -u ${{ vars.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
@@ -91,7 +127,7 @@ jobs:
       - name: stop openvpn
         if: ${{ always() }}
         run: |
-          if [ "${{ startsWith(inputs.environment, 'iv-') }}" == 'true' ]; then
+          if [ "${{ startsWith(env.ENVIRONMENT, 'iv-') }}" == 'true' ]; then
             sudo chmod 777 openvpn.log
             sudo killall openvpn
           fi
