@@ -45,7 +45,7 @@ jobs:
       - uses: StyraInc/setup-regal@main
         if: ${{ contains(github.repository, '-opa-') }}
         with:
-          version: 0.16.0
+          version: latest
       - uses: jaxxstorm/action-install-gh-release@v1
         if: ${{ contains(github.repository, '-opa-') }}
         with:
