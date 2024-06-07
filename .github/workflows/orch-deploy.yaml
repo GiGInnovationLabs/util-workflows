@@ -35,6 +35,7 @@ jobs:
       - name: detect environment
         run: |
           echo "ENVIRONMENT=${{ inputs.environment }}" >> $GITHUB_ENV
+          echo "AZURE_CREDS_SECRET_NAME=${{ inputs.environment }}_AZURE_CREDS"|sed 's/-/_/g' >> $GITHUB_ENV
           case "${{ inputs.environment }}" in
             'eks-chprod01')
               REGION='eu-central-2'
@@ -48,12 +49,12 @@ jobs:
           esac
           echo "REGION=${REGION}" >> $GITHUB_ENV
       - name: detect cluster
-        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') }}
         run: |
           if [ "${{ env.ENVIRONMENT }}" == 'eks-dev' ]; then
             CLUSTER='dev01'
           else
-            CLUSTER="$(echo ${{ env.ENVIRONMENT }} | sed 's/^eks-//g;s/^gke-//g')"
+            CLUSTER="$(echo ${{ env.ENVIRONMENT }} | sed 's/^eks-//g;s/^gke-//g;s/^aks-//g')"
           fi
           echo "CLUSTER=${CLUSTER}" >> $GITHUB_ENV
       - name: announce
@@ -136,6 +137,17 @@ jobs:
         if: ${{ startsWith(env.ENVIRONMENT, 'gke-') }}
         run: |
           kubectl config rename-context $(kubectl config current-context) ${{ env.ENVIRONMENT }}
+      - name: login to azure
+        if: ${{ startsWith(env.ENVIRONMENT, 'aks-') }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets[env.AZURE_CREDS_SECRET_NAME] }}
+      - name: login to aks
+        uses: azure/aks-set-context@v3
+        if: ${{ startsWith(env.ENVIRONMENT, 'aks-') }}
+        with:
+           resource-group: "${{ env.CLUSTER }}"
+           cluster-name: "${{ env.CLUSTER }}"
       - name: disable error notifications
         run: |
           echo "DEPLOYMENT_BEGIN=$(($(date +%s%N)/1000000))" >> $GITHUB_ENV
