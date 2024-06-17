@@ -8,7 +8,7 @@ env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-  AWS_REGION: eu-west-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
   ECLINT_VERSION: 2.7.2
 jobs:
