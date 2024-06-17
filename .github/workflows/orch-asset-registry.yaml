@@ -8,7 +8,8 @@ env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
   GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
-  AWS_REGION: eu-west-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  
 jobs:
   asset_registry_job:
     name: capture asset registry
