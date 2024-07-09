@@ -16,9 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.repository, 'util-orch-template') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GHCR_TOKEN }}
+          ref: ${{ github.ref_name }}
       - name: announce
         run: |
           echo "Updating [${{ inputs.repository }}] to [${{ inputs.version }}]"
@@ -40,6 +41,5 @@ jobs:
             git config --global user.email "${{ vars.GHCR_USER }}@ndvr.com"
             git config --global user.name "${{ vars.GHCR_USER }}"
             git commit -am "chore: ⬆ [${{ inputs.repository }}] to [${{ inputs.version }}]"
-            git push origin HEAD:main
+            git push origin HEAD:${{ github.ref_name }}
           fi
-
