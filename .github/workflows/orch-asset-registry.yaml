@@ -36,7 +36,7 @@ jobs:
           esac
           echo "REGION=${REGION}" >> $GITHUB_ENV
       - name: detect cluster
-        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') || startsWith(env.ENVIRONMENT, 'ap') }}
         run: |
           if [ "${{ env.ENVIRONMENT }}" == 'eks-dev' ]; then
             CLUSTER='dev01'
@@ -59,7 +59,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - name: login to eks
-        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'ap') }}
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER }}
       - name: setup openvpn
