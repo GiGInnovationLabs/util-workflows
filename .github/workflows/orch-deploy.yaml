@@ -85,6 +85,7 @@ jobs:
         run: |
           helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
       - run: just lint
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') }}
       - uses: mamezou-tech/setup-helmfile@v1.2.0
         with:
           helmfile-version: 'v0.153.1'
