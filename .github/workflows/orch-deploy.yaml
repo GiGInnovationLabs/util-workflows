@@ -84,15 +84,15 @@ jobs:
       - name: helm login
         run: |
           helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
-      - run: just lint
-        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') }}
-      - uses: mamezou-tech/setup-helmfile@v1.2.0
-        with:
-          helmfile-version: 'v0.153.1'
-          install-kubectl: no
-          install-helm: no
+      # - run: just lint
+      #   if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'gke-') || startsWith(env.ENVIRONMENT, 'aks-') }}
+      # - uses: mamezou-tech/setup-helmfile@v1.2.0
+      #   with:
+      #     helmfile-version: 'v0.153.1'
+      #     install-kubectl: no
+      #     install-helm: no
       - name: setup aws cli
-        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') || startsWith(env.ENVIRONMENT, 'ap') }}
+        if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
