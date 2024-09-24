@@ -59,7 +59,9 @@ jobs:
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
             /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
       - name: test
-        run: just test
+        run: | 
+          dotnet tool restore
+          just test
       - id: hasTestReport
         if: ${{ always() }}
         run: |
