@@ -37,7 +37,9 @@ jobs:
           helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
       - uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: |
+           6.0.x
+           8.0.x
       - name: setup opa
         uses: open-policy-agent/setup-opa@v2
         with:
