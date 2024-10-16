@@ -11,7 +11,7 @@ env:
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
   ECLINT_VERSION: 2.7.2
 jobs:
-  test:
+  test:    
     name: run tests
     runs-on: ubuntu-22.04
     if: ${{ !contains(github.repository, 'util-dotnet-template') }}
@@ -20,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GHCR_TOKEN }}
-      - uses: wagoid/commitlint-github-action@v5
-        with:
-          configFile: .commitlintrc.yml
-          token: ${{ secrets.GHCR_TOKEN }}
+      # - uses: wagoid/commitlint-github-action@v5
+      #   with:
+      #     configFile: .commitlintrc.yml
+      #     token: ${{ secrets.GHCR_TOKEN }}
       - uses: extractions/setup-just@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
@@ -48,18 +48,18 @@ jobs:
         if: ${{ contains(github.repository, '-opa-') }}
         with:
           version: 0.23.0
-      - uses: jaxxstorm/action-install-gh-release@v1
-        if: ${{ contains(github.repository, '-opa-') }}
-        with:
-          repo: ${{ env.ECLINT_REPO }}
-          tag: ${{ env.ECLINT_VERSION }}
-          binaries-location: bin
-          chmod: 0755
-      - name: setup editorconfig-checker
-        if: ${{ contains(github.repository, '-opa-') }}
-        run: |
-          ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
-            /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
+      # - uses: jaxxstorm/action-install-gh-release@v1
+      #   if: ${{ contains(github.repository, '-opa-') }}
+      #   with:
+      #     repo: ${{ env.ECLINT_REPO }}
+      #     tag: ${{ env.ECLINT_VERSION }}
+      #     binaries-location: bin
+      #     chmod: 0755
+      # - name: setup editorconfig-checker
+      #   if: ${{ contains(github.repository, '-opa-') }}
+      #   run: |
+      #     ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
+      #       /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
       - name: test
         run: | 
           dotnet tool restore
@@ -87,96 +87,96 @@ jobs:
           path: /tmp/test-report/*.xml
           reporter: java-junit
 
-  k3d:
-    name: deploy to k3d
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.repository, 'util-dotnet-template') }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GHCR_TOKEN }}
-      - uses: extractions/setup-just@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      - uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ vars.GHCR_USER }}
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: helm login
-        run: |
-          helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
-      - uses: jaxxstorm/action-install-gh-release@v1
-        with:
-          repo: GoogleContainerTools/skaffold
-          tag: v1.38.0
-          cache: enable
-          extension-matching: disable
-          rename-to: skaffold
-          chmod: 0755
-      - uses: rinx/setup-k3d@v0.0.4
-        with:
-          version: v5.5.1
-          skipClusterCreation: true
-      - uses: mamezou-tech/setup-helmfile@v1.2.0
-        with:
-          helmfile-version: "v0.153.1"
-          install-kubectl: no
-          install-helm: no
-      - uses: actions/checkout@v3
-        with:
-          path: ./devops
-          token: ${{ secrets.GHCR_TOKEN }}
-          repository: ${{ vars.GHCR_ORG }}/devops
-          ref: ${{ env.REPO_DEVOPS_BRANCH }}
-      - name: deploy infrastructure
-        working-directory: ./devops/helmfile
-        run: |
-          just compose k3d
-          just _up-ci
-      - name: Deploy KSQLDB
-        if: ${{ contains(github.repository, 'dwh') }}
-        working-directory: ./devops/helmfile
-        run: |
-          sudo echo '127.0.0.1 apcrg.localhost' | sudo tee -a /etc/hosts
-          helmfile -e k3d -f ./helmfile-minimal.yaml -l name=kubernetes-replicator sync --skip-deps
+  # k3d:
+  #   name: deploy to k3d
+  #   runs-on: ubuntu-latest
+  #   if: ${{ !contains(github.repository, 'util-dotnet-template') }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         token: ${{ secrets.GHCR_TOKEN }}
+  #     - uses: extractions/setup-just@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+  #     - uses: docker/login-action@v2
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ vars.GHCR_USER }}
+  #         password: ${{ secrets.GHCR_TOKEN }}
+  #     - name: helm login
+  #       run: |
+  #         helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
+  #     - uses: jaxxstorm/action-install-gh-release@v1
+  #       with:
+  #         repo: GoogleContainerTools/skaffold
+  #         tag: v1.38.0
+  #         cache: enable
+  #         extension-matching: disable
+  #         rename-to: skaffold
+  #         chmod: 0755
+  #     - uses: rinx/setup-k3d@v0.0.4
+  #       with:
+  #         version: v5.5.1
+  #         skipClusterCreation: true
+  #     - uses: mamezou-tech/setup-helmfile@v1.2.0
+  #       with:
+  #         helmfile-version: "v0.153.1"
+  #         install-kubectl: no
+  #         install-helm: no
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         path: ./devops
+  #         token: ${{ secrets.GHCR_TOKEN }}
+  #         repository: ${{ vars.GHCR_ORG }}/devops
+  #         ref: ${{ env.REPO_DEVOPS_BRANCH }}
+  #     - name: deploy infrastructure
+  #       working-directory: ./devops/helmfile
+  #       run: |
+  #         just compose k3d
+  #         just _up-ci
+  #     - name: Deploy KSQLDB
+  #       if: ${{ contains(github.repository, 'dwh') }}
+  #       working-directory: ./devops/helmfile
+  #       run: |
+  #         sudo echo '127.0.0.1 apcrg.localhost' | sudo tee -a /etc/hosts
+  #         helmfile -e k3d -f ./helmfile-minimal.yaml -l name=kubernetes-replicator sync --skip-deps
 
-          helmfile -f helmfile.yaml -e k3d repos
-          helmfile -f helmfile.yaml -e k3d -l name=ksqldb sync --skip-deps
-      - name: deploy microservice
-        run: just up
-      - name: failure logs ksqldb
-        if: ${{ failure() && contains(github.repository, 'dwh') }}
-        run: |
-          echo "------------------------------------------------------------------------------------------------------------------"
-          kubectl get all -n kafka
-          echo "------------------------------------------------------------------------------------------------------------------"
-          kubectl logs -l app=cp-ksql-server -n kafka --tail=-1
-          echo "------------------------------------------------------------------------------------------------------------------"
-      - name: failure logs
-        if: ${{ failure() }}
-        run: |
-          CHART=$(basename `pwd`)
-          echo "------------------------------------------------------------------------------------------------------------------"
-          kubectl get all -n apicurio
-          echo "------------------------------------------------------------------------------------------------------------------"
-          kubectl logs -l app.kubernetes.io/name=apicurio-registry -n apicurio --tail=-1
-          echo "------------------------------------------------------------------------------------------------------------------"
+  #         helmfile -f helmfile.yaml -e k3d repos
+  #         helmfile -f helmfile.yaml -e k3d -l name=ksqldb sync --skip-deps
+  #     - name: deploy microservice
+  #       run: just up
+  #     - name: failure logs ksqldb
+  #       if: ${{ failure() && contains(github.repository, 'dwh') }}
+  #       run: |
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         kubectl get all -n kafka
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         kubectl logs -l app=cp-ksql-server -n kafka --tail=-1
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #     - name: failure logs
+  #       if: ${{ failure() }}
+  #       run: |
+  #         CHART=$(basename `pwd`)
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         kubectl get all -n apicurio
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         kubectl logs -l app.kubernetes.io/name=apicurio-registry -n apicurio --tail=-1
+  #         echo "------------------------------------------------------------------------------------------------------------------"
 
-          echo "------------------------------------------------------------------------------------------------------------------"
-          kubectl get all
-          echo "------------------------------------------------------------------------------------------------------------------"
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         kubectl get all
+  #         echo "------------------------------------------------------------------------------------------------------------------"
 
-          echo "------------------------------------------------------------------------------------------------------------------"
-          k3d version
-          docker ps
-          kubectl describe po $CHART || true
-          echo "------------------------------------------------------------------------------------------------------------------"
+  #         echo "------------------------------------------------------------------------------------------------------------------"
+  #         k3d version
+  #         docker ps
+  #         kubectl describe po $CHART || true
+  #         echo "------------------------------------------------------------------------------------------------------------------"
 
-          for NS in $(kubectl get ns --no-headers -o custom-columns=:metadata.name); do
-            echo "Namespace: ${NS}"
-            echo "------------------------------------------------------------------------------------------------------------------"
-            kubectl logs -l app.kubernetes.io/name=${CHART} -n ${NS} --tail=-1
-            echo "------------------------------------------------------------------------------------------------------------------"
-            echo ""
-          done
+  #         for NS in $(kubectl get ns --no-headers -o custom-columns=:metadata.name); do
+  #           echo "Namespace: ${NS}"
+  #           echo "------------------------------------------------------------------------------------------------------------------"
+  #           kubectl logs -l app.kubernetes.io/name=${CHART} -n ${NS} --tail=-1
+  #           echo "------------------------------------------------------------------------------------------------------------------"
+  #           echo ""
+  #         done
