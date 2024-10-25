@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.repository, 'util-orch-template') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GHCR_TOKEN }}
       - name: process control dotfiles
@@ -60,7 +60,7 @@ jobs:
       - name: announce
         run: |
           echo "env=${{ env.ENVIRONMENT }}, cluster=${{ env.CLUSTER }}, region=${{ env.REGION }}, e2e=${{ env.E2E }}"
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
       - name: setup opa
@@ -85,14 +85,14 @@ jobs:
         run: |
           helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
       - run: just lint
-      - uses: mamezou-tech/setup-helmfile@v1.2.0
+      - uses: mamezou-tech/setup-helmfile@v2.0.0
         with:
           helmfile-version: 'v0.153.1'
           install-kubectl: no
           install-helm: no
       - name: setup aws cli
         if: ${{ startsWith(env.ENVIRONMENT, 'eks-') }}
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -239,7 +239,7 @@ jobs:
           fi
       - name: archive openvpn logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenVPN logs
           path: openvpn.log
