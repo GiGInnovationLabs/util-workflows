@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.repository, 'util-orch-template') }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: main
       - name: detect environment
@@ -49,11 +49,11 @@ jobs:
           ref: asset-registry
           token: ${{ secrets.GHCR_TOKEN }}
           path: asset-registry
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
       - name: setup aws cli
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -112,7 +112,7 @@ jobs:
       - name: login to ghcr.io
         run: |
           docker login ghcr.io -u ${{ vars.GHCR_USER }} -p ${{ secrets.GHCR_TOKEN }}
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 'pypy3.9'
           cache: 'pip'
@@ -146,7 +146,7 @@ jobs:
           fi
       - name: archive openvpn logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenVPN logs
           path: openvpn.log

@@ -1,0 +1,41 @@
+on:
+  workflow_call:
+    secrets:
+      GHCR_TOKEN:
+        required: true
+env:
+  GHCR_USER: ${{ vars.GHCR_USER }}
+  GHCR_ORG: ${{ vars.GHCR_ORG }}
+  GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+  ECLINT_REPO: editorconfig-checker/editorconfig-checker
+  ECLINT_VERSION: 2.7.2
+jobs:
+  pr_job:
+    name: just lint
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.repository, 'util-orch-template') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
+      - uses: extractions/setup-just@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      - name: setup opa
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 0.53.1
+      - uses: jaxxstorm/action-install-gh-release@v1
+        name: install editorconfig-checker
+        with:
+          repo: ${{ env.ECLINT_REPO }}
+          tag: ${{ env.ECLINT_VERSION }}
+          binaries-location: bin
+          chmod: 0755
+      - name: setup editorconfig-checker
+        run: |
+          ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
+            /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
+      - name: helm login
+        run: helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
+      - run: just lint
