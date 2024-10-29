@@ -44,7 +44,7 @@ jobs:
             CLUSTER="$(echo ${{ env.ENVIRONMENT }} | sed 's/^eks-//g;s/^gke-//g;s/^aks-//g')"
           fi
           echo "CLUSTER=${CLUSTER}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: asset-registry
           token: ${{ secrets.GHCR_TOKEN }}
