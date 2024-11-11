@@ -48,7 +48,7 @@ jobs:
         if: ${{ contains(github.repository, '-opa-') }}
         with:
           version: 0.23.0
-      - uses: jaxxstorm/action-install-gh-release@v1
+      - uses: jaxxstorm/action-install-gh-release@v1.12.0
         if: ${{ contains(github.repository, '-opa-') }}
         with:
           repo: ${{ env.ECLINT_REPO }}
@@ -106,7 +106,7 @@ jobs:
       - name: helm login
         run: |
           helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
-      - uses: jaxxstorm/action-install-gh-release@v1
+      - uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: GoogleContainerTools/skaffold
           tag: v1.38.0

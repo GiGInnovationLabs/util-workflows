@@ -32,7 +32,7 @@ jobs:
           registry: ghcr.io
           username: ${{ env.GHCR_USER }}
           password: ${{ env.GHCR_TOKEN }}
-      - uses: jaxxstorm/action-install-gh-release@v1
+      - uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: GoogleContainerTools/skaffold
           tag: v1.38.0
@@ -56,7 +56,7 @@ jobs:
             echo "HAS_REGO=true" >> $GITHUB_ENV
           fi
       - if: ${{ env.HAS_REGO == 'true' }}
-        uses: jaxxstorm/action-install-gh-release@v1
+        uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: opcr-io/policy
           tag: v0.1.44
