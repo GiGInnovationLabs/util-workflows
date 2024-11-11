@@ -67,7 +67,7 @@ jobs:
         uses: open-policy-agent/setup-opa@v2
         with:
           version: 0.53.1
-      - uses: jaxxstorm/action-install-gh-release@v1
+      - uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: ${{ env.ECLINT_REPO }}
           tag: ${{ env.ECLINT_VERSION }}
@@ -77,7 +77,7 @@ jobs:
         run: |
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
             /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
-      - uses: jaxxstorm/action-install-gh-release@v1
+      - uses: jaxxstorm/action-install-gh-release@v1.12.0
         with:
           repo: shenwei356/rush
           tag: v0.5.0
