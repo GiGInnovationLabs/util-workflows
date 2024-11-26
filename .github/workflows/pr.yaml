@@ -56,7 +56,7 @@ jobs:
           binaries-location: bin
           chmod: 0755
       - name: setup editorconfig-checker
-        if: ${{ contains(github.repository, '-opa-') }}
+        if: ${{ contains(github.repository, '-opa-') || contains(github.repository, '-mock-api') }}
         run: |
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
             /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
