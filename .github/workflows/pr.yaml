@@ -98,6 +98,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
+            -X
             -Dsonar.cs.opencover.reportsPaths=./coverage-report/SonarQube.xml
         env:
           SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
