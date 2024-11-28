@@ -86,6 +86,12 @@ jobs:
           name: test report
           path: /tmp/test-report/*.xml
           reporter: java-junit
+      - name: ReportGenerator
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        with:
+          reports: '/tmp/test-report/*/coverage.cobertura.xml'
+          targetdir: 'coverage-report'
+          reporttypes: 'SonarQube'
 
   k3d:
     name: deploy to k3d
