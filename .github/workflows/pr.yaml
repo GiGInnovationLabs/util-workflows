@@ -10,6 +10,7 @@ env:
   REPO_DEVOPS_BRANCH: main
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
   ECLINT_VERSION: 2.7.2
+  SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
 jobs:
   test:
     name: run tests
