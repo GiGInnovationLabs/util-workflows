@@ -10,7 +10,7 @@ env:
   REPO_DEVOPS_BRANCH: main
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
   ECLINT_VERSION: 2.7.2
-  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
 jobs:
   test:
     name: run tests
@@ -100,7 +100,7 @@ jobs:
           args: >
             -Dsonar.cs.opencover.reportsPaths=./coverage-report/SonarQube.xml
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
 
   k3d:
     name: deploy to k3d
