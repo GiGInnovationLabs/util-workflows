@@ -92,14 +92,14 @@ jobs:
         with:
           reports: '/tmp/test-report/*/coverage.cobertura.xml'
           targetdir: 'coverage-report'
-          reporttypes: 'SonarQube'
+          reporttypes: 'OpenCover'
       - name: Trigger SonarCloud Analysis
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           projectBaseDir: .
           args: >
             -X
-            -Dsonar.cs.opencover.reportsPaths=./coverage-report/SonarQube.xml
+            -Dsonar.cs.opencover.reportsPaths=./coverage-report/OpenCover.xml
         env:
           SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
