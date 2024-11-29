@@ -99,7 +99,7 @@ jobs:
           projectBaseDir: .
           args: >
             -X
-            -Dsonar.cs.cobertura.reportsPaths=./coverage-report/Cobertura.xml
+            -Dsonar.cs.reportsPaths=./coverage-report/Cobertura.xml
         env:
           SONAR_TOKEN: 0d9802fc7ba54d510e116931e2775cd93b4ae4c7
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
