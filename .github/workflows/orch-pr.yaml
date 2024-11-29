@@ -3,6 +3,13 @@ on:
     secrets:
       GHCR_TOKEN:
         required: true
+    inputs:
+      prev_env:
+        required: true
+        type: string
+      target_env:
+        required: true
+        type: string
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
@@ -39,3 +46,34 @@ jobs:
       - name: helm login
         run: helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
       - run: just lint
+      - name: detect previous and target environments
+        run: |
+          echo "PREV_ENV=${{ inputs.prev_env }}" >> $GITHUB_ENV
+          echo "TARGET_ENV=${{ inputs.target_env }}" >> $GITHUB_ENV
+      - name: previous environment e2e tests check
+        if: ${{ env.TARGET_ENV != 'eks-dev' }}
+        run: |
+          today=$(date +%Y-%m-%d)
+          result=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
+          "https://api.github.com/repos/$GHCR_ORG/endeavour-e2e/actions/workflows/e2e.yaml/runs?branch=main&status=completed&created>=$today&page=1" \
+          | jq ".workflow_runs | sort_by(.updated_at) | reverse | .[]  | select(.name == \"E2E tests on $PREV_ENV\")" | jq -s '.[0] | select(.conclusion == "failure")')
+
+          if [ -n "$result" ]; then
+            echo "$PREV_ENV e2e tests failed and must be solved before the deployment on $TARGET_ENV will be allowed."
+            exit 1;
+          else
+            echo "$PREV_ENV e2e tests successful."
+          fi
+      - name: target environment e2e tests check
+        if: ${{ env.TARGET_ENV != 'eks-dev' }}
+        run: |
+          result=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
+          "https://api.github.com/repos/$GHCR_ORG/endeavour-e2e/actions/workflows/e2e.yaml/runs?branch=main&status=completed&created>=$today&page=1" \
+          | jq ".workflow_runs | sort_by(.updated_at) | reverse | .[]  | select(.name == \"E2E tests on $TARGET_ENV\")" | jq -s '.[0] | select(.conclusion == "failure")')
+
+          if [ -n "$result" ]; then
+            echo "$TARGET_ENV e2e tests failed and must be solved before the deployment on $TARGET_ENV will be allowed."
+            exit 1;
+          else
+            echo "$TARGET_ENV e2e tests successful."
+          fi
