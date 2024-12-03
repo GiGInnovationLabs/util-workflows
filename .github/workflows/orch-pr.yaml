@@ -16,6 +16,7 @@ env:
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
   ECLINT_REPO: editorconfig-checker/editorconfig-checker
   ECLINT_VERSION: 2.7.2
+  CHECK_E2E_TEST: ${{ vars.CHECK_E2E_TEST || 'true' }}
 jobs:
   pr_job:
     name: just lint
@@ -51,7 +52,7 @@ jobs:
           echo "PREV_ENV=${{ inputs.prev_env }}" >> $GITHUB_ENV
           echo "TARGET_ENV=${{ inputs.target_env }}" >> $GITHUB_ENV
       - name: previous environment e2e tests check
-        if: ${{ env.TARGET_ENV != 'eks-dev' }}
+        if: ${{ env.CHECK_E2E_TEST == 'true' }}
         run: |
           today=$(date +%Y-%m-%d)
           result=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
@@ -65,7 +66,7 @@ jobs:
             echo "$PREV_ENV e2e tests successful."
           fi
       - name: target environment e2e tests check
-        if: ${{ env.TARGET_ENV != 'eks-dev' }}
+        if: ${{ env.CHECK_E2E_TEST == 'true' }}
         run: |
           result=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" \
           "https://api.github.com/repos/$GHCR_ORG/endeavour-e2e/actions/workflows/e2e.yaml/runs?branch=main&status=completed&created>=$today&page=1" \
