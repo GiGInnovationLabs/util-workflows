@@ -3,13 +3,6 @@ on:
     secrets:
       GHCR_TOKEN:
         required: true
-    inputs:
-      prev_env:
-        required: true
-        type: string
-      target_env:
-        required: true
-        type: string
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
@@ -49,8 +42,14 @@ jobs:
       - run: just lint
       - name: detect previous and target environments
         run: |
-          echo "PREV_ENV=${{ inputs.prev_env }}" >> $GITHUB_ENV
-          echo "TARGET_ENV=${{ inputs.target_env }}" >> $GITHUB_ENV
+          TARGET_ENV=$(echo "${{ github.event.repository.name }}"|sed 's/orch\-//g')
+          PREV_ENV=$(cat .prev_env 2>/dev/null || true)
+          
+          echo "PREV_ENV=$PREV_ENV" >> $GITHUB_ENV
+          echo "TARGET_ENV=$TARGET_ENV" >> $GITHUB_ENV
+          
+          echo '::notice title=PREV_ENV::$PREV_ENV'
+          echo '::notice title=TARGET_ENV::$TARGET_ENV'
       - name: previous environment e2e tests check
         if: ${{ env.CHECK_E2E_TEST == 'true' }}
         run: |
