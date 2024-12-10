@@ -1,9 +1,10 @@
 name: Run Tests and Code Analysis
 
-on:
+on:  
   push:
     branches:
       - main
+  workflow_call:
 
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
