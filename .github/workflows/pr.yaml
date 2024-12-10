@@ -71,12 +71,7 @@ jobs:
         with:
           java-version: 17
           distribution: 'zulu'
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+          
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
