@@ -1,10 +1,5 @@
 name: Run Tests and Code Analysis
 
-on:  
-  push:
-    branches:
-      - main
-
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
