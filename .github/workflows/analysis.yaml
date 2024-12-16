@@ -1,5 +1,13 @@
 name: Run Tests and Code Analysis
 
+on:
+  workflow_call:
+    secrets:
+      GHCR_TOKEN:
+        required: true
+      SONAR_TOKEN:
+        required: true
+
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
