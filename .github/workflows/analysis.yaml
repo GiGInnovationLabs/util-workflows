@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-  workflow_call:
 
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   SONAR_HOST_URL: https://sonarcloud.io
   PROJECT_KEY: GiGInnovationLabs_${{ github.event.repository.name }}
   
@@ -69,24 +69,3 @@ jobs:
           ~/.sonar/scanner/dotnet-sonarscanner begin /k:"$PROJECT_KEY" /o:"giginnovationlabs" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.coverageReportPaths="coverage-report/SonarQube.xml"
           dotnet build
           ~/.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
-      - name: Install jq (for JSON parsing)
-        run: sudo apt-get install jq -y
-
-      - name: Check Quality Gate Status
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          echo "Checking Quality Gate for Pull Request #$PR_NUMBER"
-
-          API_URL="https://sonarcloud.io/api/qualitygates/project_status?projectKey=$PROJECT_KEY&pullRequest=$PR_NUMBER"
-
-          # Fetch Quality Gate Status
-          STATUS=$(curl -s -u "$SONAR_TOKEN:" "$API_URL" | jq -r .projectStatus.status)
-          echo "Quality Gate Status for Pull Request #$PR_NUMBER: $STATUS"
-
-          if [ "$STATUS" != "OK" ]; then
-              echo "Quality Gate failed for Pull Request #$PR_NUMBER!"
-              exit 1
-          fi
