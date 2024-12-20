@@ -20,6 +20,7 @@ jobs:
   build:
     name: Run Tests and SonarQube Analysis
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.repository, '-opa-') }}
     steps:
       - name: Set up JDK 17
         uses: actions/setup-java@v4

@@ -65,18 +65,24 @@ jobs:
         run: |
           ln -s /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/ec-linux-amd64 \
             /opt/hostedtoolcache/${{ env.ECLINT_REPO }}/${{ env.ECLINT_VERSION }}/linux-x64/bin/editorconfig-checker
-      - name: Lint
+      - name: Test
+        if: ${{ contains(github.repository, '-opa-') }}
         run: |
-          just lint
-      
+          just test
+      - name: Lint
+        if: ${{ !contains(github.repository, '-opa-') }}
+        run: |
+          just lint      
       - name: Set up JDK 17
         uses: actions/setup-java@v4
+        if: ${{ !contains(github.repository, '-opa-') }}
         with:
           java-version: 17
           distribution: 'zulu'
 
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
+        if: ${{ !contains(github.repository, '-opa-') }}
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -85,29 +91,33 @@ jobs:
       - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
+        if: ${{ !contains(github.repository, '-opa-') }}
         with:
           path: ~/.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install Sonar Scanner Tool
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        if: ${{ !contains(github.repository, '-opa-') && steps.cache-sonar-scanner.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p ~/.sonar/scanner
           dotnet tool update dotnet-sonarscanner --tool-path ~/.sonar/scanner
 
       - name: Install Report Generator
+        if: ${{ !contains(github.repository, '-opa-') }}
         run: |
           mkdir -p ~/.reportgenerator
           dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator
 
       - name: Run Tests and Generate Coverage Report
+        if: ${{ !contains(github.repository, '-opa-') }}
         run: |
           dotnet tool restore
           dotnet test --logger trx --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
           ~/.reportgenerator/reportgenerator -reports:"/tmp/test-report/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:SonarQube
 
       - name: Build and Analyze
+        if: ${{ !contains(github.repository, '-opa-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -117,9 +127,11 @@ jobs:
           ~/.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Install jq (for JSON parsing)
+        if: ${{ !contains(github.repository, '-opa-') }}
         run: sudo apt-get install jq -y
 
       - name: Check Quality Gate Status
+        if: ${{ !contains(github.repository, '-opa-') }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
