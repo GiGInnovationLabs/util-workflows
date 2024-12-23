@@ -58,7 +58,7 @@ jobs:
       - name: Install Report Generator
         run: |
           mkdir -p ~/.reportgenerator
-          dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator
+          dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator --version 5.3.11
 
       - name: Run Tests and Generate Coverage Report
         run: |
