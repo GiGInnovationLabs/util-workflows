@@ -136,17 +136,28 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          echo "Checking Quality Gate for Pull Request #$PR_NUMBER"
+          echo "Checking Quality Gate for Pull Request #${PR_NUMBER}"
 
-          API_URL="https://sonarcloud.io/api/qualitygates/project_status?projectKey=$PROJECT_KEY&pullRequest=$PR_NUMBER"
+          API_URL="https://sonarcloud.io/api/qualitygates/project_status?projectKey=${PROJECT_KEY}&pullRequest=${PR_NUMBER}"
 
           # Fetch Quality Gate Status
-          STATUS=$(curl -s -u "$SONAR_TOKEN:" "$API_URL" | jq -r .projectStatus.status)
-          echo "Quality Gate Status for Pull Request #$PR_NUMBER: $STATUS"
-
-          if [ "$STATUS" != "OK" ]; then
-              echo "Quality Gate failed for Pull Request #$PR_NUMBER!"
-              exit 1
+          TIMEOUT=$(( ${SECONDS} + 300 )) # We stop checking after 5 minutes
+          STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}" | jq -r .projectStatus.status)
+          until [[ "${STATUS}" != "PENDING" && "${STATUS}" != "IN_PROGRESS" || ${SECONDS} -ge ${TIMEOUT} ]]; do
+            sleep 5
+            STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}" | jq -r .projectStatus.status)
+          done
+          if [[ "${STATUS}" == "PENDING" || "${STATUS}" == "IN_PROGRESS" || ${SECONDS} -ge ${TIMEOUT} ]]; then
+            echo "Quality Gate Status for Pull Request #${PR_NUMBER}: ${STATUS}"
+            echo "Quality Gate check timed out!"
+            exit 1
+          fi
+  
+          if [[ "${STATUS}" != "OK" ]]; then
+            echo "Quality Gate failed for Pull Request #${PR_NUMBER}!"
+            exit 1
+          else
+            echo "Quality Gate passed for Pull Request #${PR_NUMBER}!"
           fi
 
       - id: hasTestReport
