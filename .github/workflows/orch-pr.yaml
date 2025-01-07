@@ -40,6 +40,15 @@ jobs:
       - name: helm login
         run: helm registry login ghcr.io -u ${{ env.GHCR_USER }} -p ${{ env.GHCR_TOKEN }}
       - run: just lint
+      
+  e2e_check_job:
+    name: e2e test checks on envs
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.repository, 'util-orch-template') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}  
       - name: detect previous and target environments
         run: |
           TARGET_ENV=$(echo "${{ github.event.repository.name }}"|sed 's/orch\-//g')
