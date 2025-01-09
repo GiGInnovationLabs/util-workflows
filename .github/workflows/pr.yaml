@@ -143,11 +143,12 @@ jobs:
           # Fetch Quality Gate Status
           TIMEOUT=$(( ${SECONDS} + 300 )) # We stop checking after 5 minutes
           STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}" | jq -r .projectStatus.status)
-          until [[ "${STATUS}" != "PENDING" && "${STATUS}" != "IN_PROGRESS" || ${SECONDS} -ge ${TIMEOUT} ]]; do
+          until [[ "${STATUS}" != "PENDING" && "${STATUS}" != "IN_PROGRESS" && -n "${STATUS}" || ${SECONDS} -ge ${TIMEOUT} ]]; do
+            echo "Current Quality Gate Status: ${STATUS}"
             sleep 5
             STATUS=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}" | jq -r .projectStatus.status)
           done
-          if [[ "${STATUS}" == "PENDING" || "${STATUS}" == "IN_PROGRESS" || ${SECONDS} -ge ${TIMEOUT} ]]; then
+          if [[ "${STATUS}" == "PENDING" || "${STATUS}" == "IN_PROGRESS" || -z "${STATUS}" || ${SECONDS} -ge ${TIMEOUT} ]]; then
             echo "Quality Gate Status for Pull Request #${PR_NUMBER}: ${STATUS}"
             echo "Quality Gate check timed out!"
             exit 1
