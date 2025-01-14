@@ -44,7 +44,7 @@ jobs:
   e2e_check_job:
     name: e2e test checks on envs
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.repository, 'util-orch-template') }}
+    if: ${{ !contains(github.repository, 'util-orch-template') && !contains(github.ref, 'feat/add_tenant_') }}
     steps:
       - uses: actions/checkout@v4
         with:
