@@ -111,7 +111,7 @@ jobs:
           dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator --version 5.3.11
 
       - name: Run Tests and Generate Coverage Report
-        if: ${{ !contains(github.repository, env.REPOS_SKIP_ANALYSIS) }}
+        if: ${{ contains(github.repository, env.REPOS_SKIP_ANALYSIS) }}
         run: |
           dotnet tool restore
           dotnet test --logger trx --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
