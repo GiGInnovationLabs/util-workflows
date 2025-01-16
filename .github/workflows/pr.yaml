@@ -15,6 +15,7 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   SONAR_HOST_URL: https://sonarcloud.io
   PROJECT_KEY: GiGInnovationLabs_${{ github.event.repository.name }}
+  REPOS_SKIP_ANALYSIS: "-opa-,dwh"
 jobs:
   test:
     name: run tests
@@ -73,16 +74,29 @@ jobs:
         if: ${{ !contains(github.repository, '-opa-') }}
         run: |
           just lint      
+
+      - name: Set Skip Analysis flag
+        id: check-skip
+        run: |
+          REPO_NAME="${{ github.repository }}"
+          for pattern in ${REPOS_SKIP_ANALYSIS//,/ }; do
+            if [[ "$REPO_NAME" == *"$pattern"* ]]; then
+              echo "SKIP_ANALYSIS=true" >> $GITHUB_ENV
+              exit 0
+            fi
+          done
+          echo "SKIP_ANALYSIS=false" >> $GITHUB_ENV
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         with:
           java-version: 17
           distribution: 'zulu'
 
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -91,33 +105,34 @@ jobs:
       - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         with:
           path: ~/.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install Sonar Scanner Tool
-        if: ${{ !contains(github.repository, '-opa-') && steps.cache-sonar-scanner.outputs.cache-hit != 'true' }}
+        if: ${{ env.SKIP_ANALYSIS == true && steps.cache-sonar-scanner.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p ~/.sonar/scanner
           dotnet tool update dotnet-sonarscanner --tool-path ~/.sonar/scanner
 
       - name: Install Report Generator
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         run: |
           mkdir -p ~/.reportgenerator
           dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator --version 5.3.11
 
+
       - name: Run Tests and Generate Coverage Report
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         run: |
           dotnet tool restore
           dotnet test --logger trx --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
           ~/.reportgenerator/reportgenerator -reports:"/tmp/test-report/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:SonarQube
 
       - name: Build and Analyze
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -127,11 +142,11 @@ jobs:
           ~/.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Install jq (for JSON parsing)
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         run: sudo apt-get install jq -y
 
       - name: Check Quality Gate Status
-        if: ${{ !contains(github.repository, '-opa-') }}
+        if: ${{ env.SKIP_ANALYSIS == true }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
