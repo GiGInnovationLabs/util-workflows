@@ -89,14 +89,14 @@ jobs:
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
-        if: ${{ env.SKIP_ANALYSIS == true }}
+        if: ${{ env.SKIP_ANALYSIS == 'false' }}
         with:
           java-version: 17
           distribution: 'zulu'
 
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -105,7 +105,7 @@ jobs:
       - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         with:
           path: ~/.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
@@ -118,21 +118,21 @@ jobs:
           dotnet tool update dotnet-sonarscanner --tool-path ~/.sonar/scanner
 
       - name: Install Report Generator
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         run: |
           mkdir -p ~/.reportgenerator
           dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator --version 5.3.11
 
 
       - name: Run Tests and Generate Coverage Report
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         run: |
           dotnet tool restore
           dotnet test --logger trx --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
           ~/.reportgenerator/reportgenerator -reports:"/tmp/test-report/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:SonarQube
 
       - name: Build and Analyze
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -142,11 +142,11 @@ jobs:
           ~/.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Install jq (for JSON parsing)
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         run: sudo apt-get install jq -y
 
       - name: Check Quality Gate Status
-        if: ${{ env.SKIP_ANALYSIS == true }}
+          if: ${{ env.SKIP_ANALYSIS == 'false' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
