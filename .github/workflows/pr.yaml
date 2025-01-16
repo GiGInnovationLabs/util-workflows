@@ -111,8 +111,9 @@ jobs:
           dotnet tool update dotnet-reportgenerator-globaltool --tool-path ~/.reportgenerator --version 5.3.11
       
       - name: Echo SKIP_REPOS
-        run: echo "SKIP_REPOS is: $SKIP_REPOS"
-        
+        run: | 
+          echo "SKIP_REPOS is: $SKIP_REPOS"
+
       - name: Run Tests and Generate Coverage Report
         if: ${{ contains(env.REPOS_SKIP_ANALYSIS, github.repository) }}
         run: |
