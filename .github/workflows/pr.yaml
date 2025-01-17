@@ -112,7 +112,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install Sonar Scanner Tool
-        if: ${{ env.SKIP_ANALYSIS == true && steps.cache-sonar-scanner.outputs.cache-hit != 'true' }}
+        if: ${{ env.SKIP_ANALYSIS == 'false' && steps.cache-sonar-scanner.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p ~/.sonar/scanner
           dotnet tool update dotnet-sonarscanner --tool-path ~/.sonar/scanner
