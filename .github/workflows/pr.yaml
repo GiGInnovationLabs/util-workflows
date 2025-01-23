@@ -73,6 +73,7 @@ jobs:
       - name: Lint
         if: ${{ !contains(github.repository, '-opa-') }}
         run: |
+          dotnet tool restore
           just lint      
 
       - name: Set Skip Analysis flag
