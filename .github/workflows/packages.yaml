@@ -1,10 +1,10 @@
 name: Auto-Approve and Merge Dependabot PRs
 
 on:
-workflow_call:
-  secrets:
-    GHCR_TOKEN:
-      required: true
+  workflow_call:
+    secrets:
+      GHCR_TOKEN:
+        required: true
 
 jobs:
   auto-approve-and-merge:
