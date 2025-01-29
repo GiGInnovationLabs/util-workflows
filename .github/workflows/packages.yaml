@@ -66,6 +66,3 @@ jobs:
           token: ${{ secrets.GHCR_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: rebase
-permissions:
-  pull-requests: write
-  contents: write
