@@ -1,0 +1,68 @@
+name: Auto-Approve and Merge Dependabot PRs
+
+on:
+  workflow_call:
+    secrets:
+      GHCR_TOKEN:
+        required: true
+
+jobs:
+  auto-approve-and-merge:
+    if: ${{ github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]' }}
+    runs-on: ubuntu-latest
+    steps:      
+      # Step 1: Validate PR to ensure no major version upgrades
+      - name: Validate PR for Major Version Upgrades
+        id: validate_pr
+        run: |
+          PR_TITLE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          echo "PR title is: $PR_TITLE"
+
+          if [[ "$PR_TITLE" =~ ^chore\(deps\):\ (update|bump)\ .* ]]; then
+              FROM_VERSION=$(echo "$PR_TITLE" | grep -oE '[0-9]+\.[0-9]+\.\*|[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+              TO_VERSION=$(echo "$PR_TITLE" | grep -oE '[0-9]+\.[0-9]+\.\*|[0-9]+\.[0-9]+\.[0-9]+' | tail -n 1)
+              echo "From version: $FROM_VERSION"
+              echo "To version: $TO_VERSION"
+
+              FROM_MAJOR=$(echo "$FROM_VERSION" | cut -d. -f1)
+              TO_MAJOR=$(echo "$TO_VERSION" | cut -d. -f1)
+              echo "From major: $FROM_MAJOR"
+              echo "To major: $TO_MAJOR"
+
+              if [[ -z "$FROM_MAJOR" || -z "$TO_MAJOR" || "$TO_MAJOR" -gt "$FROM_MAJOR" ]]; then
+                  echo "This is a major version upgrade or one versions cannot be identified. Skipping auto-merge."
+                  echo "should_merge=false" >> $GITHUB_OUTPUT
+                  echo "major_bump=true" >> $GITHUB_OUTPUT
+              else
+                  echo "should_merge=true" >> $GITHUB_OUTPUT
+              fi
+          else
+              echo "PR title does not match the expected format."
+              echo "should_merge=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 2: Assign PR to team_leads if major bump
+      - name: Assign PR to team_leads
+        if: steps.validate_pr.outputs.major_bump == 'true'
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: "@GiGInnovationLabs/team_leads Please review this major version bump."
+
+      # Step 3: Approve the PR
+      - name: Approve Dependabot PR
+        if: steps.validate_pr.outputs.should_merge == 'true'
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GHCR_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+
+      # Step 4: Merge the PR
+      - name: Merge PR
+        if: steps.validate_pr.outputs.should_merge == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: rebase
