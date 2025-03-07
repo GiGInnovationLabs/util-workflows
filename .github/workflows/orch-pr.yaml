@@ -63,7 +63,9 @@ jobs:
                   continue 
               }
               $comment += "## $service $beforeVersion => $afterVersion`n"
-              $comment += $resp.body + "`n"
+              $serviceComment = $resp.body.Replace("## What's Changed", "") # remove the title
+              $serviceComment = $serviceComment.Split("## New Contributors")[0] # remove the new contributors section
+              $comment += $serviceComment + "`n"
           }
           if ($comment -eq "") { exit 0 }
           $comment | Out-File -FilePath ./comment.md -Force
