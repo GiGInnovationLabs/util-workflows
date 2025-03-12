@@ -192,6 +192,12 @@ jobs:
           name: test report
           path: /tmp/test-report/*.trx
           reporter: dotnet-trx
+      - name: upload crash dump
+        uses: actions/upload-artifact@v4
+        if: ${{ (success() || failure()) }}
+        with:
+          name: crash-dump
+          path: /tmp/test-report/*.dmp
       - name: test report junit
         uses: dorny/test-reporter@v1
         if: ${{ (success() || failure()) && steps.hasTestReport.outputs.hasJunit == 'true' }}
