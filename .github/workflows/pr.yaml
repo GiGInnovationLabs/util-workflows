@@ -129,7 +129,7 @@ jobs:
         if: ${{ env.SKIP_ANALYSIS == 'false' }}
         run: |
           dotnet tool restore
-          dotnet test --logger trx --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
+          dotnet test --logger trx --logger "console;verbosity=detailed"  -v normal --blame-hang-timeout 60000  --results-directory /tmp/test-report --filter "Category=Unit|Category=Component|Category=Integration" --collect:"XPlat Code Coverage"
           ~/.reportgenerator/reportgenerator -reports:"/tmp/test-report/**/coverage.cobertura.xml" -targetdir:"coverage-report" -reporttypes:SonarQube
 
       - name: Build and Analyze
