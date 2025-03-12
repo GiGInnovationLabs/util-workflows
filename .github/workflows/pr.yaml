@@ -197,7 +197,7 @@ jobs:
         if: ${{ (success() || failure()) }}
         with:
           name: crash-dump
-          path: /tmp/test-report/*.dmp
+          path: /tmp/test-report/**/*.dmp
       - name: test report junit
         uses: dorny/test-reporter@v1
         if: ${{ (success() || failure()) && steps.hasTestReport.outputs.hasJunit == 'true' }}
