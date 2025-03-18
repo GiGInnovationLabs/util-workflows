@@ -4,6 +4,10 @@ on:
       environment:
         required: true
         type: string
+      helmfile_sync:
+        required: true
+        type: boolean
+        default: false
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
@@ -26,11 +30,6 @@ jobs:
             echo "E2E=false" >> $GITHUB_ENV
           else
             echo "E2E=true" >> $GITHUB_ENV
-          fi
-          if [ -f .helmfile_sync ] || [ -f .helmfile-sync ] || [ -f .helmfile.sync ]; then
-            echo "HELMFILE_SYNC=true" >> $GITHUB_ENV
-          else
-            echo "HELMFILE_SYNC=false" >> $GITHUB_ENV
           fi
       - name: detect environment
         run: |
@@ -153,11 +152,11 @@ jobs:
           echo "DEPLOYMENT_BEGIN=$(($(date +%s%N)/1000000))" >> $GITHUB_ENV
           kubectl patch daemonset fluent-bit -n telemetry -p '{"spec": {"template": {"spec": {"nodeSelector": {"non-existing": "true"}}}}}' || true
       - name: helmfile apply
-        if: ${{ env.HELMFILE_SYNC == 'false' }}
+        if: ${{ inputs.helmfile_sync != 'true' }}
         run: |
           helmfile apply --concurrency 4
       - name: helmfile sync
-        if: ${{ env.HELMFILE_SYNC == 'true' }}
+        if: ${{ inputs.helmfile_sync == 'true' }}
         run: |
           helmfile sync --concurrency 4
       - name: health check
