@@ -6,8 +6,8 @@ on:
         type: string
       helmfile_sync:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: 'false'
 env:
   GHCR_USER: ${{ vars.GHCR_USER }}
   GHCR_ORG: ${{ vars.GHCR_ORG }}
