@@ -5,7 +5,7 @@ on:
         required: true
         type: string
       helmfile_sync:
-        required: true
+        required: false
         type: boolean
         default: false
 env:
