@@ -88,6 +88,8 @@ class K8sManager:
 
         for resourcelist in kubernetes_resources:
             for resource in resourcelist.items:
+                if not resource.metadata.annotations:
+                    continue
                 chart = resource.metadata.labels.get('chart') or resource.metadata.labels.get('helm.sh/chart')
                 release = resource.metadata.annotations.get('meta.helm.sh/release-name')
                 instance = resource.metadata.labels.get('app.kubernetes.io/instance')
